@@ -6,7 +6,6 @@ using System.Linq;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.SharePoint;
 //https://github.com/SharePoint/PnP/tree/master/Samples/Core.LargeFileUpload
 namespace SharePointDocUploadHelper
 {
@@ -119,50 +118,76 @@ namespace SharePointDocUploadHelper
         }
 
         // public string UploadDocument(string libraryName, String fileName, byte[] file)
-        public string UploadDocument(string url, String fileName, String inputFile)
+        public string UploadDocument(string libraryName, String fileName, String inputFile)
         {
-            SPSite sps = new SPSite(url);
-            var file = clientContext.Web.GetFileByUrl(url);// sps.OpenWeb();
-            //SPFile file = spwCurrent.GetFile(fileName);
-            clientContext.Load(file);
+            var responseUrl = "";
+            Web web = clientContext.Web;
+            clientContext.Load(web);
             clientContext.ExecuteQuery();
 
+            /// teams / NAJDOCS / Shared Documents / FDD028
 
+            string folderPath = string.Format("{0}/{1}", web.ServerRelativeUrl,
+               libraryName);
+
+            var folder = clientContext.Web.GetFolderByServerRelativeUrl(folderPath);
+            clientContext.Load(folder);
+            clientContext.ExecuteQuery();
+
+            //MemoryStream stream = new MemoryStream(file);
+            FileStream stream = new FileStream(inputFile, FileMode.Open);
+            FileCreationInformation info = new FileCreationInformation
+            {
+                ContentStream = stream,
+                Url = fileName,
+                Overwrite = true
+            };
+
+
+            //List docs = web.Lists.GetByTitle(libraryName);
+            Microsoft.SharePoint.Client.File uploadFile = folder.Files.Add(info);
+
+            clientContext.Load(uploadFile);
+            clientContext.ExecuteQuery();
+
+            responseUrl = new Uri(clientContext.Url).GetLeftPart(UriPartial.Authority)
+                              + uploadFile.ServerRelativeUrl;
+
+
+
+
+            return responseUrl;
+        }
+
+        public string UploadDocumentBarcode(string libraryName, String fileName, byte[] file)
+        {
             var responseUrl = "";
-            //Web web = clientContext.Web;
-            //clientContext.Load(web);
-            //clientContext.ExecuteQuery();
+            Web web = clientContext.Web;
+            clientContext.Load(web);
+            clientContext.ExecuteQuery();
 
-            ///// teams / NAJDOCS / Shared Documents / FDD028
+            string folderPath = string.Format("{0}/{1}", web.ServerRelativeUrl,
+               libraryName);
 
-            //string folderPath = string.Format("{0}/{1}", web.ServerRelativeUrl,
-            //   libraryName);
+            var folder = clientContext.Web.GetFolderByServerRelativeUrl(folderPath);
+            clientContext.Load(folder);
+            clientContext.ExecuteQuery();
 
-            //var folder = clientContext.Web.GetFolderByServerRelativeUrl(folderPath);
-            //clientContext.Load(folder);
-            //clientContext.ExecuteQuery();
+            MemoryStream stream = new MemoryStream(file);
+            FileCreationInformation info = new FileCreationInformation
+            {
+                ContentStream = stream,
+                Url = fileName,
+                Overwrite = true
+            };
 
-            ////MemoryStream stream = new MemoryStream(file);
-            //FileStream stream = new FileStream(inputFile, FileMode.Open);
-            //FileCreationInformation info = new FileCreationInformation
-            //{
-            //    ContentStream = stream,
-            //    Url = fileName,
-            //    Overwrite = true
-            //};
+            Microsoft.SharePoint.Client.File uploadFile = folder.Files.Add(info);
 
+            clientContext.Load(uploadFile);
+            clientContext.ExecuteQuery();
 
-            ////List docs = web.Lists.GetByTitle(libraryName);
-            //Microsoft.SharePoint.Client.File uploadFile = folder.Files.Add(info);
-
-            //clientContext.Load(uploadFile);
-            //clientContext.ExecuteQuery();
-
-            //responseUrl = new Uri(clientContext.Url).GetLeftPart(UriPartial.Authority)
-            //                  + uploadFile.ServerRelativeUrl;
-
-
-
+            responseUrl = new Uri(clientContext.Url).GetLeftPart(UriPartial.Authority)
+                              + uploadFile.ServerRelativeUrl;
 
             return responseUrl;
         }
